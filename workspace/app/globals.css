@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* 입력 필드 스타일 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ==============================================
+   커스텀 슬라이더 스타일 (Option A 방식)
+   
+   핵심: track을 투명하게 하고 height를 thumbSize와 동일하게 설정
+   이렇게 하면 thumb이 track(=input) 중앙에 자연스럽게 위치
+   ============================================== */
+
+/* 기본 슬라이더 - 트랙 숨김 */
+.slider-custom {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Large 슬라이더 (thumb: 20px) */
+.slider-large {
+  height: 20px;
+}
+
+.slider-large::-webkit-slider-runnable-track {
+  height: 20px;  /* thumbSize와 동일 - thumb이 중앙에 위치 */
+  background: transparent;
+}
+
+.slider-large::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 0;  /* track height = thumb height이므로 오프셋 불필요 */
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.slider-large::-moz-range-track {
+  height: 20px;
+  background: transparent;
+}
+
+.slider-large::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* Small 슬라이더 (thumb: 16px) */
+.slider-small {
+  height: 16px;
+}
+
+.slider-small::-webkit-slider-runnable-track {
+  height: 16px;  /* thumbSize와 동일 */
+  background: transparent;
+}
+
+.slider-small::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 0;  /* track height = thumb height이므로 오프셋 불필요 */
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.slider-small::-moz-range-track {
+  height: 16px;
+  background: transparent;
+}
+
+.slider-small::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 그라디언트 배경 */
+.bg-gradient-mesh {
+  background: 
+    radial-gradient(at 40% 20%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+}
