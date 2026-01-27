@@ -29,6 +29,12 @@ interface ResponseMetrics {
   settlingTime: number;
 }
 
+// 고정 축 범위 상수
+const FIXED_AXIS = {
+  FLOW_MAX: 30,    // m³/h (정격 25 + 여유)
+  POWER_MAX: 15,   // kW (정격 13.6 + 여유)
+};
+
 export default function SimulationPage() {
   const [startFlow, setStartFlow] = useState(0);
   const [targetFlow, setTargetFlow] = useState(20);
@@ -36,6 +42,7 @@ export default function SimulationPage() {
   const [data, setData] = useState<TransientData[]>([]);
   const [metrics, setMetrics] = useState<ResponseMetrics | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fixedAxis, setFixedAxis] = useState(false);
   
   // Debounce timer ref
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -125,15 +132,81 @@ export default function SimulationPage() {
             <h3 className="text-lg font-semibold text-white">시뮬레이션 설정</h3>
             <InfoTooltip title="과도 응답이란?">
               <p><strong>과도 응답(Transient Response)</strong></p>
-              <p>시스템이 한 상태에서 다른 상태로 변할 때 나타나는 일시적인 반응입니다.</p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
+              <p className="text-slate-400 text-xs mt-1">시스템이 한 상태에서 다른 상태로 변할 때 나타나는 일시적인 반응입니다.</p>
+              <ul className="list-disc list-inside mt-2 space-y-1 text-slate-300">
                 <li><strong>빠른 응답</strong>: 목표에 빨리 도달하지만 튀어오름(오버슈트) 발생</li>
                 <li><strong>안정적 응답</strong>: 속도와 안정성의 균형</li>
                 <li><strong>부드러운 응답</strong>: 천천히 부드럽게 도달, 기계 수명에 유리</li>
               </ul>
-              <p className="mt-2 text-slate-400 text-xs">
-                💡 이 시뮬레이션은 1차 시스템 모델 기반의 이론적 응답입니다.
-              </p>
+              
+              <div className="mt-3 pt-3 border-t border-slate-700">
+                <p className="text-xs font-semibold text-slate-300 mb-2">📐 물리 기반 동적 모델</p>
+                <div className="space-y-2 bg-slate-900/50 rounded-lg p-3">
+                  <div className="text-xs text-slate-400">
+                    <p className="font-mono text-cyan-400">각운동량 방정식:</p>
+                    <p className="ml-2">I × dω/dt = T<sub>motor</sub> - T<sub>load</sub></p>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    <p className="font-mono text-cyan-400">2차 시스템 응답:</p>
+                    <p className="ml-2">G(s) = ωₙ² / (s² + 2ζωₙs + ωₙ²)</p>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    <p className="font-mono text-cyan-400">오버슈트:</p>
+                    <p className="ml-2">%OS = 100 × e<sup>-ζπ/√(1-ζ²)</sup></p>
+                  </div>
+                </div>
+                <p className="mt-2 text-slate-400 text-xs">
+                  💡 시간상수와 오버슈트가 변화량(Δ)과 목표 유량에 따라 동적으로 조정됩니다.
+                </p>
+              </div>
+              
+              <div className="mt-4 pt-3 border-t border-slate-700">
+                <p className="text-xs font-semibold text-slate-300 mb-2">📚 참고 문헌</p>
+                <div className="space-y-2 text-xs">
+                  <div className="border-l-2 border-cyan-500 pl-2 bg-slate-900/30 rounded-r p-2">
+                    <a 
+                      href="https://www.nature.com/articles/s41598-024-57693-9" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-cyan-400 hover:text-cyan-300 hover:underline"
+                    >
+                      A theoretical model for predicting the startup performance of pumps as turbines (2024)
+                    </a>
+                    <p className="text-slate-500">- Zhang, Zhao & Zhu</p>
+                    <p className="text-slate-400 mt-1 text-[10px]">
+                      → 각운동량 방정식 (I × dω/dt), 비정상 베르누이 방정식, tanh 기반 속도 응답 모델
+                    </p>
+                  </div>
+                  <div className="border-l-2 border-amber-500 pl-2 bg-slate-900/30 rounded-r p-2">
+                    <a 
+                      href="https://www.nature.com/articles/s41598-025-27662-x" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-amber-400 hover:text-amber-300 hover:underline"
+                    >
+                      Reduced-order linearized dynamic model for induction motor-driven centrifugal fan-pump system (2025)
+                    </a>
+                    <p className="text-slate-500">- Turkeri et al.</p>
+                    <p className="text-slate-400 mt-1 text-[10px]">
+                      → 3차 선형화 전달함수, 유량 동역학 상수(χ), 2차 시스템 응답 G(s) = ωₙ²/(s²+2ζωₙs+ωₙ²)
+                    </p>
+                  </div>
+                  <div className="border-l-2 border-purple-500 pl-2 bg-slate-900/30 rounded-r p-2">
+                    <a 
+                      href="https://neutrium.net/articles/equipment/estimation-of-pump-moment-of-inertia/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-purple-400 hover:text-purple-300 hover:underline"
+                    >
+                      Estimation of Pump Moment of Inertia
+                    </a>
+                    <p className="text-slate-500">- Neutrium (Wylie et al.)</p>
+                    <p className="text-slate-400 mt-1 text-[10px]">
+                      → 관성 모멘트 추정 공식: I = 1.5×10⁷×(P/N³)⁰·⁹⁵⁵⁶, 시간상수-관성 관계
+                    </p>
+                  </div>
+                </div>
+              </div>
             </InfoTooltip>
           </div>
           
@@ -198,60 +271,52 @@ export default function SimulationPage() {
         </div>
 
         {/* 결과 패널 */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 지표 카드 (3개) */}
-          <div className="grid grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          {/* 지표 카드 (1줄) */}
+          <div className="grid grid-cols-3 gap-3">
             {/* 변화 시간 */}
-            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-              <div className="flex items-center gap-1 mb-2">
+            <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-1">
                 <span className="text-sm text-slate-400">변화 시간</span>
                 <InfoTooltip title="변화 시간 (Transition Time)">
                   <p><strong>변화 시간이란?</strong></p>
                   <p>시작 유량에서 목표 유량까지 10% → 90% 도달하는 데 걸리는 시간입니다.</p>
-                  <ul className="list-disc list-inside mt-2 text-xs space-y-1">
-                    <li><strong>상승 시</strong>: 시작값의 10% 상승 → 90% 상승 시간</li>
-                    <li><strong>하강 시</strong>: 시작값의 10% 하강 → 90% 하강 시간</li>
-                  </ul>
                   <p className="mt-2 text-slate-400 text-xs">
                     💡 값이 작을수록 빠르게 목표에 도달합니다.
                   </p>
                 </InfoTooltip>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-cyan-400">
+                <span className="text-xl font-bold text-cyan-400">
                   {metrics?.transitionTime.toFixed(1) ?? '-'}
                 </span>
-                <span className="text-slate-500 text-sm">초</span>
+                <span className="text-slate-500 text-xs">초</span>
               </div>
             </div>
 
             {/* 오버슈트 */}
-            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-              <div className="flex items-center gap-1 mb-2">
+            <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-1">
                 <span className="text-sm text-slate-400">오버슈트</span>
                 <InfoTooltip title="오버슈트 (Overshoot)">
                   <p><strong>오버슈트란?</strong></p>
                   <p>목표값을 지나쳐서 튀어오른 정도를 백분율로 표시합니다.</p>
-                  <ul className="list-disc list-inside mt-2 text-xs space-y-1">
-                    <li><strong>상승 시</strong>: 목표값을 초과한 양 / 변화량 × 100</li>
-                    <li><strong>하강 시</strong>: 목표값보다 더 내려간 양 (언더슈트) / 변화량 × 100</li>
-                  </ul>
                   <p className="mt-2 text-slate-400 text-xs">
                     💡 오버슈트가 클수록 진동이 심하고 기계 수명에 불리합니다.
                   </p>
                 </InfoTooltip>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className={`text-2xl font-bold ${metrics && metrics.overshoot > 10 ? 'text-red-400' : 'text-green-400'}`}>
+                <span className={`text-xl font-bold ${metrics && metrics.overshoot > 10 ? 'text-red-400' : 'text-green-400'}`}>
                   {metrics?.overshoot.toFixed(1) ?? '-'}
                 </span>
-                <span className="text-slate-500 text-sm">%</span>
+                <span className="text-slate-500 text-xs">%</span>
               </div>
             </div>
 
             {/* 안정화 시간 */}
-            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-              <div className="flex items-center gap-1 mb-2">
+            <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-1">
                 <span className="text-sm text-slate-400">안정화 시간</span>
                 <InfoTooltip title="안정화 시간 (Settling Time)">
                   <p><strong>안정화 시간이란?</strong></p>
@@ -262,10 +327,10 @@ export default function SimulationPage() {
                 </InfoTooltip>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-amber-400">
+                <span className="text-xl font-bold text-amber-400">
                   {metrics?.settlingTime.toFixed(1) ?? '-'}
                 </span>
-                <span className="text-slate-500 text-sm">초</span>
+                <span className="text-slate-500 text-xs">초</span>
               </div>
             </div>
           </div>
@@ -273,13 +338,25 @@ export default function SimulationPage() {
           {/* 응답 곡선 */}
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">과도 응답 곡선</h3>
-              {loading && (
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-cyan-500"></div>
-              )}
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white">과도 응답 곡선</h3>
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-cyan-500"></div>
+                )}
+              </div>
+              <button
+                onClick={() => setFixedAxis(!fixedAxis)}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                  fixedAxis
+                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                    : 'bg-slate-700/50 text-slate-400 border border-slate-600 hover:border-slate-500'
+                }`}
+              >
+                {fixedAxis ? '고정 축 ON' : '고정 축 OFF'}
+              </button>
             </div>
 
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={480}>
               <LineChart data={data} margin={{ top: 20, right: 60, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis
@@ -290,13 +367,14 @@ export default function SimulationPage() {
                 <YAxis
                   yAxisId="flow"
                   stroke="#94a3b8"
-                  domain={[0, Math.max(targetFlow, startFlow, 1) * 1.3]}
+                  domain={fixedAxis ? [0, FIXED_AXIS.FLOW_MAX] : [0, Math.max(targetFlow, startFlow, 1) * 1.3]}
                   label={{ value: '유량 (m³/h)', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
                 />
                 <YAxis
                   yAxisId="power"
                   orientation="right"
                   stroke="#94a3b8"
+                  domain={fixedAxis ? [0, FIXED_AXIS.POWER_MAX] : ['auto', 'auto']}
                   label={{ value: '전력 (kW)', angle: 90, position: 'insideRight', fill: '#94a3b8' }}
                 />
                 <Tooltip
@@ -345,25 +423,6 @@ export default function SimulationPage() {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* 제어 응답 특성 설명 */}
-          <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-400 mb-3">제어 응답 특성 지표</h4>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-cyan-400 font-mono text-xs">Tt (Transition Time)</p>
-                <p className="text-slate-500">10% → 90% 변화 시간</p>
-              </div>
-              <div>
-                <p className="text-amber-400 font-mono text-xs">Mp (Overshoot)</p>
-                <p className="text-slate-500">목표값 초과/미달 비율</p>
-              </div>
-              <div>
-                <p className="text-purple-400 font-mono text-xs">Ts (Settling Time)</p>
-                <p className="text-slate-500">±2% 범위 진입 시간</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
