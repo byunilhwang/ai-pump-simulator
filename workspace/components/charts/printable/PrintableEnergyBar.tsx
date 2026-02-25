@@ -53,7 +53,7 @@ export default function PrintableEnergyBar({ caseA, caseB, caseC }: PrintableEne
               position="right"
               fill="#334155"
               fontSize={10}
-              formatter={(value: number) => `${value.toFixed(1)} kW`}
+              formatter={(value) => typeof value === 'number' ? `${value.toFixed(1)} kW` : ''}
             />
           </Bar>
         </BarChart>
