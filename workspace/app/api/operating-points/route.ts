@@ -9,9 +9,9 @@ import { calculateHead, calculateEfficiency, calculateHydraulicPower } from '@/l
 
 export async function GET() {
   try {
-    // 밸브 단계별 운전점 데이터 생성
+    // 밸브 단계별 운전점 데이터 생성 (2026년 1월 실측 기준)
     const operatingPoints = VALVE_STAGES.map(stage => {
-      const head = calculateHead(stage.pressure, 0);
+      const head = stage.head;  // 실측 양정 직접 사용
       const hydraulicPower = calculateHydraulicPower(stage.flow, head);
       const efficiency = stage.flow > 0 
         ? calculateEfficiency(stage.flow, head, stage.power)
@@ -19,14 +19,13 @@ export async function GET() {
       
       return {
         stage: stage.stage,
-        valveAngle: stage.angle,
         flow: stage.flow,
         head: Math.round(head * 10) / 10,
         power: stage.power,
         hydraulicPower: Math.round(hydraulicPower * 100) / 100,
         efficiency: Math.round(efficiency * 10) / 10,
         outletPressure: stage.pressure,
-        powerFactor: 0.85, // 평균 역률
+        powerFactor: 0.85,
       };
     });
     

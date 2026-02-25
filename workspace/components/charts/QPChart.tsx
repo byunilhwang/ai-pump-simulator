@@ -25,9 +25,9 @@ interface QPChartProps {
 
 export default function QPChart({ data, height = 300 }: QPChartProps) {
   return (
-    <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center mb-4">
-        <h3 className="text-lg font-semibold text-white">Q-P 전력 곡선</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Q-P 전력 곡선</h3>
         <InfoTooltip title="Q-P 전력 곡선">
           <p><strong>Q-P 곡선이란?</strong></p>
           <p>유량에 따라 펌프가 소비하는 전력을 보여주는 그래프입니다.</p>
@@ -46,21 +46,22 @@ export default function QPChart({ data, height = 300 }: QPChartProps) {
       </div>
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis
             dataKey="flow"
-            stroke="#94a3b8"
-            label={{ value: '유량 Q (m³/h)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }}
+            stroke="#64748b"
+            label={{ value: '유량 Q (m³/h)', position: 'insideBottom', offset: -10, fill: '#64748b' }}
           />
           <YAxis
-            stroke="#94a3b8"
-            label={{ value: '전력 P (kW)', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
+            stroke="#64748b"
+            label={{ value: '전력 P (kW)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
             formatter={(value, name) => [`${(value as number).toFixed(2)} kW`, name as string]}
           />

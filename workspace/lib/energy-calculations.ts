@@ -13,10 +13,10 @@
  * - Case C: 인버터 + AI (최적 제어)
  */
 
-import { ELECTRICITY, VALVE_STAGES, PUMP_RATED, EFFICIENCY, OPERATING_LIMITS } from './constants';
+import { ELECTRICITY, VALVE_STAGES, PUMP_RATED, EFFICIENCY, OPERATING_LIMITS, PRESSURE_CONTROL, PHYSICS } from './constants';
 
 /**
- * 인버터 전력 모델링 상수
+ * 인버터 전력 모델링 상수 (Phase 2 실측 스펙 반영)
  * 
  * DOE Motors Handbook 기준:
  * - 무부하 손실(철손, 마찰/베어링)은 정격의 15-25%
@@ -29,15 +29,25 @@ import { ELECTRICITY, VALVE_STAGES, PUMP_RATED, EFFICIENCY, OPERATING_LIMITS } f
  * - 냉각팬 최저 속도: ~3%
  * - VFD 스위칭 손실: ~3%
  * - 합계: ~16-18%
+ * 
+ * Phase 2 실측 스펙:
+ * - 펌프: Grundfos CRN15-8 (20.5 m³/h, 130m, 72.5%)
+ * - 모터: HIGEN 15kW (91% 효율)
  */
 const POWER_MODEL = {
   // 고정 손실 (유량 0에서도 발생) - DOE 기준 정격의 18-20%
-  FIXED_LOSS_AI: PUMP_RATED.POWER * 0.18,     // Case C: ~2.45 kW
-  FIXED_LOSS_PID: PUMP_RATED.POWER * 0.20,    // Case B: ~2.72 kW (PID 오버헤드)
+  // Phase 2: 정격 15kW 기준
+  FIXED_LOSS_AI: PUMP_RATED.POWER * 0.18,     // Case C: ~2.7 kW
+  FIXED_LOSS_PID: PUMP_RATED.POWER * 0.20,    // Case B: ~3.0 kW (PID 오버헤드)
   
-  // 정격 값
-  RATED_FLOW: PUMP_RATED.FLOW,
-  RATED_POWER: PUMP_RATED.POWER,
+  // 정격 값 (Phase 2 실측)
+  RATED_FLOW: PUMP_RATED.FLOW,                // 20.5 m³/h
+  RATED_POWER: PUMP_RATED.POWER,              // 15.0 kW
+  RATED_HEAD: PUMP_RATED.HEAD,                // 130 m
+  
+  // 효율 (Phase 2 실측)
+  PUMP_EFFICIENCY: PUMP_RATED.PUMP_EFFICIENCY,   // 72.5%
+  MOTOR_EFFICIENCY: PUMP_RATED.MOTOR_EFFICIENCY, // 91%
   
   // 최소 절감율 (정격 기준, Case A 대비)
   MIN_SAVING_AI: 0.02,    // Case C: 최소 2% 절감
@@ -117,10 +127,10 @@ export function getMotorEfficiency(loadRatio: number): number {
  * - 고정 손실: 정격의 18% (DOE Motors Handbook)
  * - 가변 손실: 상사법칙 적용 (P ∝ Q³)
  * - VFD 효율 손실: 3% (ABB 기준)
- * - 모터 부분부하 효율 저하 반영
+ * - 모터 부분부하 효율 저하 반영 (부하율 = P/P_rated)
  * 
  * @param targetFlow - 목표 유량 (m³/h)
- * @param ratedFlow - 정격 유량 (기본 25 m³/h)
+ * @param ratedFlow - 정격 유량 (기본 20.5 m³/h)
  * @returns 인버터 전력 (kW)
  */
 export function calculateInverterPower(
@@ -139,17 +149,18 @@ export function calculateInverterPower(
   // P_variable = (P_rated - P_fixed) × (Q/Q_rated)³
   const variablePower = (ratedPower - fixedLoss) * Math.pow(flowRatio, 3);
   
-  // 효율 손실 보정
-  const vfdEfficiencyLoss = 1 / EFFICIENCY.VFD_DRIVE;  // 97% → 1.031
-  const motorEfficiency = getMotorEfficiency(flowRatio);
-  const motorEfficiencyLoss = 1 / motorEfficiency;
-  
-  // 총 효율 손실 (VFD + 모터 부분부하)
-  // 정격에서는 손실 최소화, 저유량에서는 손실 증가
-  const efficiencyFactor = 1 + (vfdEfficiencyLoss - 1) + (motorEfficiencyLoss - 1) * (1 - flowRatio) * 0.5;
-  
   // 기본 전력 = 고정 + 가변
   const basePower = fixedLoss + variablePower;
+  
+  // 부하율 = 실제 전력 / 정격 전력 (유량비가 아닌 전력비 사용)
+  const loadRatio = basePower / ratedPower;
+  
+  // 모터 효율 (부하율 기반)
+  const motorEfficiency = getMotorEfficiency(loadRatio);
+  
+  // 효율 손실 보정 (단순화)
+  // totalPower = basePower / (η_vfd × η_motor)
+  const efficiencyFactor = 1 / (EFFICIENCY.VFD_DRIVE * motorEfficiency);
   
   // 효율 손실 적용
   const totalPower = basePower * efficiencyFactor;
@@ -301,6 +312,99 @@ export function generateCaseComparison(targetFlow: number): {
     },
     savingBvsA: valvePower > 0 ? ((valvePower - pidPower) / valvePower) * 100 : 0,
     savingCvsA: valvePower > 0 ? ((valvePower - inverterPower) / valvePower) * 100 : 0,
+  };
+}
+
+/**
+ * 압력 기반 제어: 필요 속도비 계산 (Phase 2)
+ * 
+ * 상사법칙: H ∝ N²
+ * → N/N_rated = √(H_target / H_rated)
+ * 
+ * @param targetPressure - 목표 압력 (bar)
+ * @returns 필요 속도비 (0-1)
+ */
+export function calculateSpeedRatioForPressure(targetPressure: number): number {
+  const targetHead = targetPressure * PRESSURE_CONTROL.BAR_TO_HEAD;
+  const ratedHead = POWER_MODEL.RATED_HEAD;
+  
+  // N/N_rated = √(H_target / H_rated)
+  const speedRatio = Math.sqrt(targetHead / ratedHead);
+  
+  // VFD 운전 범위 제한
+  const minRatio = PUMP_RATED.VFD_SPEED_RATIO_MIN;
+  return Math.max(minRatio, Math.min(1, speedRatio));
+}
+
+/**
+ * 압력 기반 제어: 예측 전력 계산 (Phase 2)
+ * 
+ * 상사법칙: P ∝ N³
+ * → P = P_rated × (N/N_rated)³
+ * 
+ * @param targetPressure - 목표 압력 (bar)
+ * @returns 예측 전력 (kW)
+ */
+export function calculatePowerForPressure(targetPressure: number): number {
+  const speedRatio = calculateSpeedRatioForPressure(targetPressure);
+  
+  // P = P_fixed + (P_rated - P_fixed) × (N/N_rated)³
+  const fixedLoss = POWER_MODEL.FIXED_LOSS_AI;
+  const ratedPower = POWER_MODEL.RATED_POWER;
+  const variablePower = (ratedPower - fixedLoss) * Math.pow(speedRatio, 3);
+  
+  return fixedLoss + variablePower;
+}
+
+/**
+ * 압력 기반 제어: 예측 유량 계산 (Phase 2)
+ * 
+ * 상사법칙: Q ∝ N
+ * → Q = Q_rated × (N/N_rated)
+ * 
+ * @param targetPressure - 목표 압력 (bar)
+ * @returns 예측 유량 (m³/h)
+ */
+export function calculateFlowForPressure(targetPressure: number): number {
+  const speedRatio = calculateSpeedRatioForPressure(targetPressure);
+  return POWER_MODEL.RATED_FLOW * speedRatio;
+}
+
+/**
+ * 압력 기반 제어: 전체 예측 결과 (Phase 2)
+ * 
+ * @param targetPressure - 목표 압력 (bar)
+ * @returns 제어 예측 결과
+ */
+export function calculatePressureControlPrediction(targetPressure: number): {
+  targetPressure: number;
+  targetHead: number;
+  speedRatio: number;
+  requiredRPM: number;
+  predictedPower: number;
+  predictedFlow: number;
+  valvePowerAtSameFlow: number;
+  savingPercent: number;
+} {
+  const speedRatio = calculateSpeedRatioForPressure(targetPressure);
+  const targetHead = targetPressure * PRESSURE_CONTROL.BAR_TO_HEAD;
+  const requiredRPM = Math.round(PUMP_RATED.MOTOR_RPM * speedRatio);
+  const predictedPower = calculatePowerForPressure(targetPressure);
+  const predictedFlow = calculateFlowForPressure(targetPressure);
+  const valvePowerAtSameFlow = getValvePower(predictedFlow);
+  const savingPercent = valvePowerAtSameFlow > 0 
+    ? ((valvePowerAtSameFlow - predictedPower) / valvePowerAtSameFlow) * 100 
+    : 0;
+  
+  return {
+    targetPressure,
+    targetHead: Math.round(targetHead * 10) / 10,
+    speedRatio: Math.round(speedRatio * 1000) / 1000,
+    requiredRPM,
+    predictedPower: Math.round(predictedPower * 100) / 100,
+    predictedFlow: Math.round(predictedFlow * 100) / 100,
+    valvePowerAtSameFlow: Math.round(valvePowerAtSameFlow * 100) / 100,
+    savingPercent: Math.round(savingPercent * 10) / 10,
   };
 }
 

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  --background: #f8fafc;
+  --foreground: #1e293b;
 }
 
 body {
@@ -20,11 +20,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #e2e8f0;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #94a3b8;
   border-radius: 4px;
 }
 
@@ -76,8 +76,8 @@ input[type="number"] {
   margin-top: 0;  /* track height = thumb height이므로 오프셋 불필요 */
   background: white;
   border-radius: 50%;
-  border: 2px solid #22d3ee;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 2px solid #0891b2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -91,8 +91,8 @@ input[type="number"] {
   height: 20px;
   background: white;
   border-radius: 50%;
-  border: 2px solid #22d3ee;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 2px solid #0891b2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -114,8 +114,8 @@ input[type="number"] {
   margin-top: 0;  /* track height = thumb height이므로 오프셋 불필요 */
   background: white;
   border-radius: 50%;
-  border: 2px solid #22d3ee;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 2px solid #0891b2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -129,8 +129,8 @@ input[type="number"] {
   height: 16px;
   background: white;
   border-radius: 50%;
-  border: 2px solid #22d3ee;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 2px solid #0891b2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -150,12 +150,12 @@ input[type="number"] {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* 그라디언트 배경 */
+/* 그라디언트 배경 (라이트 테마) */
 .bg-gradient-mesh {
   background: 
-    radial-gradient(at 40% 20%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(6, 182, 212, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.04) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.06) 0px, transparent 50%);
 }

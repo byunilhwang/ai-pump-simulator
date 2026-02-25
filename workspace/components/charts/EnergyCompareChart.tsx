@@ -54,10 +54,10 @@ export default function EnergyCompareChart({
   const maxPower = fixedMaxPower ?? 15;
   
   return (
-    <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <h3 className="text-lg font-semibold text-white">전력 비교</h3>
+          <h3 className="text-lg font-semibold text-slate-900">전력 비교</h3>
           <InfoTooltip title="에너지 절감 계산 모델">
             <p><strong>상사법칙 (Affinity Laws)</strong></p>
             <p className="text-slate-400 text-xs mt-1">펌프의 회전수(속도)와 유량, 양정, 전력 사이의 관계를 설명하는 법칙입니다.</p>
@@ -115,28 +115,28 @@ export default function EnergyCompareChart({
             </div>
           </InfoTooltip>
         </div>
-        <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full">
-          <span className="text-green-400 font-bold">{savingPercent}%</span>
-          <span className="text-green-400 text-sm">절감</span>
+        <div className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+          <span className="text-green-600 font-bold">{savingPercent}%</span>
+          <span className="text-green-600 text-sm">절감</span>
         </div>
       </div>
       
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} layout="vertical" margin={{ top: 20, right: 40, left: 80, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
           <XAxis
             type="number"
-            stroke="#94a3b8"
+            stroke="#64748b"
             domain={[0, maxPower]}
             tickFormatter={(value) => `${value}`}
-            label={{ value: '전력 (kW)', position: 'insideBottom', offset: -10, fill: '#94a3b8' }}
+            label={{ value: '전력 (kW)', position: 'insideBottom', offset: -10, fill: '#64748b' }}
           />
           <YAxis
             type="category"
             dataKey="name"
-            stroke="#94a3b8"
+            stroke="#64748b"
             width={80}
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            tick={{ fill: '#64748b', fontSize: 12 }}
           />
           <Bar dataKey="power" radius={[0, 8, 8, 0]} isAnimationActive={false}>
             {data.map((entry, index) => (
@@ -145,7 +145,7 @@ export default function EnergyCompareChart({
             <LabelList 
               dataKey="power" 
               position="right" 
-              fill="#94a3b8"
+              fill="#64748b"
               formatter={(value) => `${(value as number).toFixed(1)} kW`}
             />
           </Bar>

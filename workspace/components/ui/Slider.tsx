@@ -57,9 +57,9 @@ export default function Slider({
       {/* 라벨과 값 표시 */}
       {(label || unit !== undefined) && (
         <div className="flex items-center justify-between mb-2">
-          {label && <span className="text-sm text-slate-400">{label}</span>}
+          {label && <span className="text-sm text-slate-600">{label}</span>}
           <div className="flex items-center gap-1">
-            <span className="text-cyan-400 font-semibold">{value}</span>
+            <span className="text-cyan-600 font-semibold">{value}</span>
             {unit && <span className="text-slate-500 text-sm">{unit}</span>}
           </div>
         </div>
@@ -84,10 +84,10 @@ export default function Slider({
           }}
         >
           {/* 트랙 배경 */}
-          <div className="absolute inset-0 bg-slate-900 rounded-full border border-slate-600" />
+          <div className="absolute inset-0 bg-slate-200 rounded-full border border-slate-300" />
           {/* 채워진 부분 */}
           <div 
-            className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full"
+            className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
             style={{ width: `${ratio * 100}%` }}
           />
         </div>
@@ -110,7 +110,7 @@ export default function Slider({
           return (
             <span 
               key={markerVal}
-              className={`absolute text-xs ${value === markerVal ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}
+              className={`absolute text-xs ${value === markerVal ? 'text-cyan-600 font-bold' : 'text-slate-500'}`}
               style={{ 
                 top: thumbSize + 8,
                 // thumb 중심 위치: thumbRadius + ratio * (100% - thumbSize)
@@ -127,7 +127,7 @@ export default function Slider({
       {/* 퍼센트 표시 */}
       {showPercent && (
         <div className="flex justify-center mt-2">
-          <span className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm font-semibold">
+          <span className="bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1 rounded-full text-sm font-semibold">
             {Math.round(ratio * 100)}% 운전
           </span>
         </div>

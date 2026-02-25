@@ -10,7 +10,6 @@ import Slider from '@/components/ui/Slider';
 
 interface OperatingPoint {
   stage: number;
-  valveAngle: number;
   flow: number;
   head: number;
   power: number;
@@ -19,16 +18,32 @@ interface OperatingPoint {
   outletPressure: number;
 }
 
+interface CurvePoint {
+  flow: number;
+  head: number;
+}
+
+// Phase 2 실측 스펙 (2026년 1월 데이터 기준)
+const RATED_SPECS = {
+  FLOW: 20.5,      // m³/h (정격 유량)
+  POWER: 12.88,    // kW (실측 운전 전력)
+  MAX_POWER: 13.59,// kW (최대 운전 전력)
+  EFFICIENCY: 59   // % (실측 효율)
+};
+
 export default function Dashboard() {
   const [operatingPoints, setOperatingPoints] = useState<OperatingPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFlow, setSelectedFlow] = useState(15);
+  const [selectedFlow, setSelectedFlow] = useState(12);
   const [energyData, setEnergyData] = useState({
     valvePower: 0,
     inverterPower: 0,
     pidPower: 0,
     savingPercent: 0,
   });
+  
+  // 펌프 곡선 데이터 (연속)
+  const [pumpCurve, setPumpCurve] = useState<CurvePoint[]>([]);
 
   useEffect(() => {
     fetch('/api/operating-points')
@@ -60,13 +75,25 @@ export default function Dashboard() {
       });
   }, [selectedFlow]);
 
+  // 펌프 곡선 데이터 로드
+  useEffect(() => {
+    fetch('/api/pump-curve')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data.curveData) {
+          setPumpCurve(data.data.curveData);
+        }
+      });
+  }, []);
+
   const maxEfficiency = operatingPoints.length > 0 
     ? Math.max(...operatingPoints.map(p => p.efficiency))
     : 0;
 
+  // 정격 유량(20.5) 근처의 운전점에서 전력 추출
   const ratedPower = operatingPoints.length > 0
-    ? operatingPoints[operatingPoints.length - 1].power
-    : 0;
+    ? operatingPoints.find(p => p.flow >= 19 && p.flow <= 21)?.power || RATED_SPECS.POWER
+    : RATED_SPECS.POWER;
 
   if (loading) {
     return (
@@ -80,19 +107,19 @@ export default function Dashboard() {
     <div className="space-y-8 animate-fade-in">
       {/* 헤더 */}
       <div>
-        <h1 className="text-3xl font-bold text-white">대시보드</h1>
-        <p className="text-slate-400 mt-2">
+        <h1 className="text-3xl font-bold text-slate-900">대시보드</h1>
+        <p className="text-slate-600 mt-2">
           AI 기반 인버터 적용 펌프 성능분석 및 에너지 절감 시뮬레이터
         </p>
       </div>
 
-      {/* 주요 지표 카드 */}
+      {/* 주요 지표 카드 (Phase 2 실측 스펙 반영) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="정격 유량"
-          value="25"
+          value={RATED_SPECS.FLOW.toString()}
           unit="m³/h"
-          description="6단계 완전 개방"
+          description="Grundfos CRN15-8"
           color="cyan"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,23 +168,23 @@ export default function Dashboard() {
       </div>
 
       {/* 유량 선택 슬라이더 */}
-      <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">운전 유량 선택</h3>
+          <h3 className="text-lg font-semibold text-slate-900">운전 유량 선택</h3>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-cyan-400">{selectedFlow}</span>
-            <span className="text-slate-400">m³/h</span>
+            <span className="text-2xl font-bold text-cyan-600">{selectedFlow}</span>
+            <span className="text-slate-500">m³/h</span>
           </div>
         </div>
         
         <Slider
           value={selectedFlow}
           min={0}
-          max={25}
+          max={20}
           step={1}
           onChange={setSelectedFlow}
           size="large"
-          markers={[0, 5, 10, 15, 20, 25]}
+          markers={[0, 4, 8, 12, 16, 20]}
           showPercent={true}
         />
       </div>
@@ -175,7 +202,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {operatingPoints.length > 0 && (
           <>
-            <QHChart data={operatingPoints} showEfficiency={true} height={350} />
+            <QHChart 
+              data={operatingPoints} 
+              showEfficiency={true} 
+              height={350}
+              pumpCurve={pumpCurve}
+            />
             <QPChart data={operatingPoints} height={350} />
           </>
         )}
