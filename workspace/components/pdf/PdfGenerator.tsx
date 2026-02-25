@@ -328,9 +328,9 @@ export default function PdfGenerator({
           backgroundColor: '#ffffff',
         });
         const energyImg = energyCanvas.toDataURL('image/png');
-        doc.addImage(energyImg, 'PNG', margin, y, contentWidth, 45);
+        doc.addImage(energyImg, 'PNG', margin, y, contentWidth, 60);
       }
-      y += 48;
+      y += 63;
       doc.setFontSize(8);
       doc.text('그림 4.1 제어방식별 전력소모 비교', pageWidth / 2, y, { align: 'center' });
       y += 8;
@@ -379,9 +379,9 @@ export default function PdfGenerator({
           backgroundColor: '#ffffff',
         });
         const transientImg = transientCanvas.toDataURL('image/png');
-        doc.addImage(transientImg, 'PNG', margin, y, contentWidth, 70);
+        doc.addImage(transientImg, 'PNG', margin, y, contentWidth, 90);
       }
-      y += 73;
+      y += 93;
       doc.setFontSize(8);
       doc.text('그림 5.1 과도응답 곡선', pageWidth / 2, y, { align: 'center' });
       
@@ -542,10 +542,10 @@ export default function PdfGenerator({
           </ResponsiveContainer>
         </div>
 
-        {/* 과도응답 차트 - 웹과 유사한 비율 */}
+        {/* 과도응답 차트 - 웹과 유사한 비율 (높이 증가) */}
         <div id="print-transient-chart" style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '15px', overflow: 'visible' }}>
           <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>과도 응답 곡선</h4>
-          <ResponsiveContainer width={650} height={320}>
+          <ResponsiveContainer width={650} height={400}>
             <LineChart data={transientData} margin={{ top: 20, right: 60, left: 20, bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="time" stroke="#64748b" tick={{ fill: '#64748b', fontSize: 11 }} label={{ value: '시간 (초)', position: 'insideBottom', offset: -15, fill: '#64748b', fontSize: 11 }} />
@@ -560,10 +560,10 @@ export default function PdfGenerator({
           </ResponsiveContainer>
         </div>
 
-        {/* 에너지 비교 차트 - 웹과 유사한 비율 */}
+        {/* 에너지 비교 차트 - 웹과 유사한 비율 (높이 증가) */}
         <div id="print-energy-chart" style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '15px', overflow: 'visible' }}>
           <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>전력 비교</h4>
-          <ResponsiveContainer width={650} height={200}>
+          <ResponsiveContainer width={650} height={280}>
             <BarChart 
               data={[
                 { name: 'Case A\n밸브 교축', power: energyData.caseA, fill: '#ef4444' },
